@@ -14,6 +14,11 @@ import sys
 import re
 import numpy as np
 
+import time
+start_time = time.time()
+
+
+
 
 # These are the modules that are needed in order to succesfully execute the code below. **```subprocess```** is used in order to make the systemcalls that execute the solver and other management calls like *rm* and *cp*. **```re```** is a very important module that lets us search through the ```.lp```-files to determine robots and destination with the use of regular expressions (regex). Additionally it lets us ultimately convert the output plan into adequate input for further solving steps.
 # 
@@ -36,8 +41,8 @@ subprocess.run(["conda", "activate", "asprin"])
 
 
 non_base_lines   = re.compile("init\(object\(destination.*$" )
-where_robots     = re.compile("init\(object\(robot,[0-9]\), value\(at,")
-where_dests      = re.compile("init\(object\(destination,[0-9]\), value\(at,")
+where_robots     = re.compile("init\(object\(robot,[0-9]+\), value\(at,")
+where_dests      = re.compile("init\(object\(destination,[0-9]+\), value\(at,")
 find_plans       = re.compile("occurs\(object\(robot,")
 
 
@@ -84,7 +89,7 @@ for line in target_instance.readlines():
                                                                     ##
     for match in re.finditer(where_robots, line):                   ##
         robot_inits.append(line)                                    ##
-        robot_idents.append(re.findall(r'[-\d]+', line)[0])         ##
+        robot_idents.append(re.findall('\d+', line)[0])         ##
                                                                     ##
     ##end## find robot identifiers and initial starting points #######
     
@@ -92,7 +97,7 @@ for line in target_instance.readlines():
                                                                    ##
     for match in re.finditer(where_dests, line):                   ##
         dest_inits.append(line)                                    ##
-        dest_idents.append(re.findall(r'[-\d]+', line)[0])         ##
+        dest_idents.append(re.findall('\d+', line)[0])         ##
                                                                    ##    
     ##end## find destination identifiers and initial position #######
     
@@ -122,11 +127,11 @@ print(dest_inits)
 
 
 for i in range(len(robot_idents)):
-    x1 = int(re.findall(r'[-\d]+', robot_inits[i])[1])
-    y1 = int(re.findall(r'[-\d]+', robot_inits[i])[2])
+    x1 = int(re.findall('\d+', robot_inits[i])[1])
+    y1 = int(re.findall('\d+', robot_inits[i])[2])
     
-    x2 = int(re.findall(r'[-\d]+', dest_inits[i])[1])
-    y2 = int(re.findall(r'[-\d]+', dest_inits[i])[2])
+    x2 = int(re.findall('\d+', dest_inits[i])[1])
+    y2 = int(re.findall('\d+', dest_inits[i])[2])
      
     manhattan = np.abs(x1-x2) + np.abs(y1-y2)
     
@@ -135,9 +140,10 @@ for i in range(len(robot_idents)):
 
 priority_scores, robot_idents, dest_idents, dest_inits = (list(t) for t in zip(*sorted(zip(priority_scores, robot_idents, dest_idents, dest_inits), reverse=True)))
 
-'''
+
 print(priority_scores)
 print(robot_idents)
+'''
 print(dest_idents)
 print(dest_inits)
 '''
@@ -216,12 +222,11 @@ subprocess.run(["rm", "temp_instance.lp"])
 subprocess.run(["cp", "temp_plan.lp", dest])
 subprocess.run(["rm", "temp_plan.lp"])
 
-
 # This deletes the files that are no longer needed. ```target_plan.lp``` can later be replaced by a given argument when calling the script.
 # 
 # ---
 
-# In[ ]:
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
